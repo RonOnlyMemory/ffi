@@ -1,5 +1,5 @@
 # ffi
-ffi is a library for calling functions with unknown signatures at runtime.
+ffi is a library for calling functions with variable lists of arguments.
 
 # alternatives
 if you are looking for more mature alternatives:
