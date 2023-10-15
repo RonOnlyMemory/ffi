@@ -8,7 +8,7 @@ ffi_invoke_win64:
 
 		mov rax, [rsp +0x30] # function
 		mov r10, [rsp +0x38] # len
-		mov r11, [rsp +0x40] # args
+		mov r11, [rsp +0x40] # args_end
 		add r11, 0x08
 
 		test r10, 1
