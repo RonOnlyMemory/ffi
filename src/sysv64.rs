@@ -87,7 +87,7 @@ pub unsafe extern "C" fn ffi_call_sysv64(
 	len: c_ulonglong, args: *const (c_ulonglong, c_longlong),
 	rt: c_int, ret: *mut c_longlong,
 ) -> c_int {
-	if let Some(rv) = call_intern(f as _, args as _, len as _) {
+	if let Some(rv) = call_intern(f as _, len as _, args as _) {
 		match rt {
 			0 => {
 				*(ret as *mut u64) = rv.u64();
