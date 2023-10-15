@@ -14,6 +14,11 @@ ffi_invoke_win64:
 		mov r10, r12
 		mov r11, [rsp +0x48]
 
+		test r12, 1
+		jnz 4f
+			push 0
+		4:
+
 		2:
 		cmp r10, 0
 		jle 0f
@@ -26,7 +31,12 @@ ffi_invoke_win64:
 		sub rsp, 0x20
 			call rax
 		add rsp, 0x20
-		
+
+		test r12, 1
+		jnz 4f
+			pop r11
+		4:
+
 		2:
 		cmp r12, 0
 		jle 0f
@@ -41,7 +51,6 @@ ffi_invoke_win64:
 "#);
 
 extern "win64" {
-	// len must be even for the stack to be 16 bytes aligned
 	pub fn ffi_invoke_win64(
 		rcx: u64, rdx: u64, r8: u64, r9: u64,
 		f: *const (),
@@ -77,13 +86,7 @@ pub unsafe fn call(f: *const (), args: &[Arg]) -> ReturnValue {
 	let r9 = a.map(|a| a.int()).unwrap_or(0);
 	let xmm3 = a.map(|a| a.double()).unwrap_or(0.0);
 
-	let iter = iter.map(|a| a.data());
-
-	let mut args: Vec<u64> = iter.collect();
-	if args.len()%2 == 0 {
-		args.push(0);
-	}
-	let args: Vec<u64> = args.into_iter().rev().collect();
+	let args: Vec<u64> = iter.map(|a| a.data()).rev().collect();
 	let int = set_xmm_reg(
 		xmm0, xmm1, xmm2, xmm3,
 		rcx, rdx, r8, r9,

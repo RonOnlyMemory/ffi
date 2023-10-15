@@ -15,6 +15,11 @@ ffi_invoke_sysv64:
 		mov r10, r12
 		mov r11, [rsp +0xa8]
 
+		test r12, 1
+		jnz 4f
+			push 0
+		4:
+
 		2:
 		cmp r10, 0
 		jle 0f
@@ -24,8 +29,13 @@ ffi_invoke_sysv64:
 			jmp 2b
 		0:
 
-			call rax
-		
+		call rax
+
+		test r12, 1
+		jnz 4f
+			pop r11
+		4:
+
 		2:
 		cmp r12, 0
 		jle 0f
@@ -33,7 +43,7 @@ ffi_invoke_sysv64:
 			pop r11
 			jmp 2b
 		0:
-		
+
 	pop r12
 	pop rbp
 	add rsp, 0x80
@@ -41,7 +51,6 @@ ffi_invoke_sysv64:
 "#);
 
 extern "sysv64" {
-	// len must be even for the stack to be 16 bytes aligned
 	pub fn ffi_invoke_sysv64(
 		rdi: u64, rsi: u64, rdx: u64, rcx: u64, r8: u64, r9: u64,
 		xmm0: f64, xmm1: f64, xmm2: f64, xmm3: f64, xmm4: f64, xmm5: f64, xmm6: f64, xmm7: f64,
@@ -80,9 +89,6 @@ pub unsafe fn call(f: *const (), args: &[Arg]) -> ReturnValue {
 		}
 	}
 
-	if rest.len()%2 == 0 {
-		rest.push(0);
-	}
 	let rest: Vec<u64> = rest.into_iter().rev().collect();
 	let int = ffi_invoke_sysv64(
 		regs[0].unwrap_or(0), regs[1].unwrap_or(0),
