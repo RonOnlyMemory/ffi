@@ -7,9 +7,9 @@ ffi_invoke_sysv64:
 	push rbp
 	mov rbp, rsp
 
-		mov rax, [rsp +0x90]
-		mov r10, [rsp +0x98]
-		mov r11, [rsp +0xa0]
+		mov rax, [rsp +0x90] # function
+		mov r10, [rsp +0x98] # len
+		mov r11, [rsp +0xa0] # args
 
 		test r10, 1
 		jz 4f
