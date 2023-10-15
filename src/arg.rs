@@ -1,4 +1,7 @@
 
+
+
+#[repr(u8)]
 #[derive(Clone, Copy)]
 pub enum Arg {
 	Int(u64),

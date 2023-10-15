@@ -6,9 +6,10 @@ ffi_invoke_win64:
 	push rbp
 	mov rbp, rsp
 
-		mov rax, [rsp +0x30]
-		mov r10, [rsp +0x38]
-		mov r11, [rsp +0x40]
+		mov rax, [rsp +0x30] # function
+		mov r10, [rsp +0x38] # len
+		mov r11, [rsp +0x40] # args
+		add r11, 0x08
 
 		test r10, 1
 		jz 4f
@@ -20,7 +21,7 @@ ffi_invoke_win64:
 		jle 0f
 			dec r10
 			push [r11]
-			add r11, 0x8
+			sub r11, 0x10
 			jmp 2b
 		0:
 

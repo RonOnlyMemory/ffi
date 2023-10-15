@@ -8,7 +8,7 @@ extern "win64" {
 	pub fn ffi_invoke_win64(
 		rcx: u64, rdx: u64, r8: u64, r9: u64,
 		f: *const (),
-		len: u64, rest: *const u64,
+		len: u64, args_end: *const Arg,
 	) -> u64;
 }
 
@@ -16,12 +16,14 @@ unsafe extern "win64" fn set_xmm_reg(
 	_xmm0: f64, _xmm1: f64, _xmm2: f64, _xmm3: f64,
 	rcx: u64, rdx: u64, r8: u64, r9: u64,
 	f: *const (),
-	len: u64, rest: *const u64,
+	len: u64, args_end: *const Arg,
 ) -> u64 {
-	ffi_invoke_win64(rcx, rdx, r8, r9, f, len, rest)
+	ffi_invoke_win64(rcx, rdx, r8, r9, f, len, args_end)
 }
 
 pub unsafe fn call(f: *const (), args: &[Arg]) -> ReturnValue {
+	assert_eq!(std::mem::size_of::<Arg>(), 0x10);
+
 	let mut iter = args.into_iter();
 
 	let a = iter.next();
@@ -40,12 +42,22 @@ pub unsafe fn call(f: *const (), args: &[Arg]) -> ReturnValue {
 	let r9 = a.map(|a| a.int()).unwrap_or(0);
 	let xmm3 = a.map(|a| a.double()).unwrap_or(0.0);
 
-	let args: Vec<u64> = iter.map(|a| a.data()).rev().collect();
+	let mut rest = 0 as *const Arg;
+	let mut len = args.len();
+
+	if len > 4 {
+		rest = args[4..].as_ptr();
+		len -= 4;
+		rest = rest.offset(len as isize -1);
+	} else {
+		len = 0;
+	}
+
 	let int = set_xmm_reg(
 		xmm0, xmm1, xmm2, xmm3,
 		rcx, rdx, r8, r9,
 		f,
-		args.len() as _, args.as_ptr(),
+		len as _, rest,
 	);
 	let mut double: f64;
 	asm!(
