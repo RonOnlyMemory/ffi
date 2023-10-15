@@ -63,42 +63,32 @@ pub unsafe fn call(f: *const (), args: &[Arg]) -> ReturnValue {
 	ReturnValue::new(int.to_ne_bytes(), double.to_ne_bytes())
 }
 
-unsafe fn call_intern(f: *const (), len: u64, args: *const (u64, u64)) -> Option<ReturnValue> {
-	let mut data = Vec::<Arg>::new();
-	for c in 0..len as isize {
-		let a = args.offset(c);
-		let (t, d) = *a;
-		match t {
-			0 => {
-				data.push(Arg::Int(d));
-			}
-			1 => {
-				data.push(Arg::Double(f64::from_ne_bytes(d.to_ne_bytes())));
-			}
-			_ => None?,
-		}
-	}
-	Some(call(f, &data))
-}
-
 #[no_mangle]
 pub unsafe extern "C" fn ffi_call_sysv64(
 	f: *const c_void,
 	len: c_ulonglong, args: *const (c_ulonglong, c_longlong),
 	rt: c_int, ret: *mut c_longlong,
 ) -> c_int {
-	if let Some(rv) = call_intern(f as _, len as _, args as _) {
-		match rt {
-			0 => {
-				*(ret as *mut u64) = rv.u64();
-			}
-			1 => {
-				*(ret as *mut c_double) = rv.f64();
-			}
-			_ => return 0,
+	assert_eq!(
+		std::mem::size_of::<Arg>(),
+		std::mem::size_of::<(c_ulonglong, c_longlong)>(),
+	);
+	for c in 0..len {
+		let (c, _) = *args.offset(c as _);
+		if c >= 2 {
+			return 0;
 		}
-		1
-	} else {
-		0
 	}
+	let args = std::mem::transmute(args);
+	let rv = call(f as _, std::slice::from_raw_parts(args, len as _));
+	match rt {
+		0 => {
+			*(ret as *mut u64) = rv.u64();
+		}
+		1 => {
+			*(ret as *mut c_double) = rv.f64();
+		}
+		_ => {}
+	};
+	1
 }
