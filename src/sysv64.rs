@@ -84,7 +84,7 @@ unsafe fn call_intern(f: *const (), len: u64, args: *const (u64, u64)) -> Option
 #[no_mangle]
 pub unsafe extern "C" fn ffi_call_sysv64(
 	f: *const c_void,
-	len: c_longlong, args: *const (c_longlong, c_longlong),
+	len: c_ulonglong, args: *const (c_ulonglong, c_longlong),
 	rt: c_int, ret: *mut c_longlong,
 ) -> c_int {
 	if let Some(rv) = call_intern(f as _, args as _, len as _) {
