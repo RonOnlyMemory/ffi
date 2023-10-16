@@ -9,7 +9,7 @@ extern "sysv64" {
 		rdi: u64, rsi: u64, rdx: u64, rcx: u64, r8: u64, r9: u64,
 		xmm0: f64, xmm1: f64, xmm2: f64, xmm3: f64, xmm4: f64, xmm5: f64, xmm6: f64, xmm7: f64,
 		f: *const (),
-		len: u64, rest: *const u64,
+		len: u64, rest: *const Arg,
 	) -> u64;
 }
 
@@ -20,30 +20,23 @@ pub unsafe fn call(f: *const (), args: &[Arg]) -> ReturnValue {
 	let mut reg_index = 0;
 	let mut xmm_index = 0;
 
-	let mut rest = Vec::<u64>::new();
-
 	for arg in args {
 		match arg {
 			Arg::Int(_) => {
 				if reg_index < 6 {
 					regs[reg_index] = Some(arg.int());
 					reg_index += 1;
-				} else {
-					rest.push(arg.data());
 				}
 			}
 			Arg::Double(_) => {
 				if xmm_index < 8 {
 					xmms[xmm_index] = Some(arg.double());
 					xmm_index += 1;
-				} else {
-					rest.push(arg.data());
 				}
 			}
 		}
 	}
 
-	let rest: Vec<u64> = rest.into_iter().rev().collect();
 	let int = ffi_invoke_sysv64(
 		regs[0].unwrap_or(0), regs[1].unwrap_or(0),
 		regs[2].unwrap_or(0), regs[3].unwrap_or(0),
@@ -53,7 +46,7 @@ pub unsafe fn call(f: *const (), args: &[Arg]) -> ReturnValue {
 		xmms[4].unwrap_or(0.0), xmms[5].unwrap_or(0.0),
 		xmms[6].unwrap_or(0.0), xmms[7].unwrap_or(0.0),
 		f,
-		rest.len() as _, rest.as_ptr(),
+		args.len() as _, args.as_ptr(),
 	);
 	let mut double: f64;
 	asm!(
