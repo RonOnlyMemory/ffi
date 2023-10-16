@@ -1,4 +1,4 @@
-use std::{arch::{global_asm, asm}, ffi::*};
+use core::{arch::{global_asm, asm}, ffi::*};
 
 use crate::{arg::Arg, return_value::ReturnValue};
 
@@ -63,8 +63,8 @@ pub unsafe extern "C" fn ffi_call_sysv64(
 	rt: c_int, ret: *mut c_longlong,
 ) -> c_int {
 	assert_eq!(
-		std::mem::size_of::<Arg>(),
-		std::mem::size_of::<(c_ulonglong, c_longlong)>(),
+		core::mem::size_of::<Arg>(),
+		core::mem::size_of::<(c_ulonglong, c_longlong)>(),
 	);
 	for c in 0..len {
 		let (c, _) = *args.offset(c as _);
@@ -72,8 +72,8 @@ pub unsafe extern "C" fn ffi_call_sysv64(
 			return 0;
 		}
 	}
-	let args = std::mem::transmute(args);
-	let rv = call(f as _, std::slice::from_raw_parts(args, len as _));
+	let args = core::mem::transmute(args);
+	let rv = call(f as _, core::slice::from_raw_parts(args, len as _));
 	match rt {
 		0 => {
 			*(ret as *mut u64) = rv.u64();
